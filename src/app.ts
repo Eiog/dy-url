@@ -12,13 +12,19 @@ const port = process.env.PORT || 3000;
 const router = createRouter();
 router.get(
   '/',
-  eventHandler((e) => {
+  eventHandler(async (e) => {
     const { url } = getQuery(e) as { url: string };
-    if (url) {
-      getDyUrl(url);
+    try {
+      const info = await getDyUrl(url);
+      return {
+        info,
+        title: info.aweme_detail.desc,
+        cover: info.aweme_detail.video.cover.url_list[0],
+        url: info.aweme_detail.video.play_addr.url_list[0],
+      };
+    } catch (error) {
+      return error;
     }
-
-    return 'hello world';
   }),
 );
 app.use(router);
