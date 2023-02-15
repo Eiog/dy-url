@@ -1,10 +1,11 @@
 import { createServer } from 'node:http'
+import { readFileSync } from 'fs'
 import {
   createApp,
   createRouter,
   eventHandler,
   getQuery,
-  readBody,
+  setHeader,
   toNodeListener,
 } from 'h3'
 import download from 'download'
@@ -17,13 +18,19 @@ router.get(
   '/',
   eventHandler(async (e) => {
     const { url } = getQuery(e) as { url: string }
+
     try {
       const info = await getDyUrl(url)
+      const vidUrl = info.aweme_detail.video.play_addr.url_list[0]
+      const name = `${vidUrl.match(/(?<=(\/)).*?(?=(\/\?))/)![0].slice(vidUrl.match(/(?<=(\/)).*?(?=(\/\?))/)![0].lastIndexOf('/') + 1)}.mp4`
+      const dirName = `download/${dayjs().format('YYYY-MM-DD')}/`
+      const file = await download(vidUrl, dirName)
       return {
         info,
         title: info.aweme_detail.desc,
         cover: info.aweme_detail.video.cover.url_list[0],
         url: info.aweme_detail.video.play_addr.url_list[0],
+        filePath: dirName + name,
       }
     }
     catch (error) {
@@ -31,10 +38,12 @@ router.get(
     }
   }),
 )
-router.post('/download', eventHandler(async (e) => {
+router.get('/download', eventHandler(async (e) => {
   try {
-    const { url } = await readBody(e) as { url: string }
-    const file = download(url, `download/${dayjs().format('YYYY-MM-DD')}/`)
+    const { path } = getQuery(e) as { path: string }
+    const file = readFileSync(path)
+    setHeader(e, 'Content-Type', 'application/force-download')
+    setHeader(e, 'Content-Disposition', `attachment;filename=${path.slice(path.lastIndexOf('/') + 1)}`)
     return file
   }
   catch (error) {
