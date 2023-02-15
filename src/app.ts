@@ -24,7 +24,7 @@ router.get(
       const vidUrl = info.aweme_detail.video.play_addr.url_list[0]
       const name = `${vidUrl.match(/(?<=(\/)).*?(?=(\/\?))/)![0].slice(vidUrl.match(/(?<=(\/)).*?(?=(\/\?))/)![0].lastIndexOf('/') + 1)}.mp4`
       const dirName = `download/${dayjs().format('YYYY-MM-DD')}/`
-      const file = await download(vidUrl, dirName)
+      await download(vidUrl, dirName)
       return {
         info,
         title: info.aweme_detail.desc,
